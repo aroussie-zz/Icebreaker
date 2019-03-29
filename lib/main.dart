@@ -1,4 +1,3 @@
-import 'package:challenge/questionPage.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -12,38 +11,69 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey();
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  List<String> questions = [
+    "If you could have an endless supply of any food, what would you get?"
+  ];
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
+        appBar: AppBar(
+          title: Text("IceBreaker"),
+        ),
+        body: Stack(
+      children: questions.map((question) {
+        return buildQuestion(question);
+    }).toList()));
+  }
 
-        title: Text(widget.title),
-      ),
-      body: QuestionPage()
-    );
+  Widget buildQuestion(String question) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24,0,24,24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Expanded(child:
+            Center(
+              child: Text(
+                question,
+                textScaleFactor: 2,
+              ),
+            )),
+            Container(
+              alignment: Alignment.bottomCenter,
+              child: RaisedButton(
+                  child: SizedBox(
+                    height: 58,
+                    width: double.infinity,
+                    child: Center(
+                      child: Text(
+                        "NEXT",
+                        textAlign: TextAlign.center,
+                        textScaleFactor: 2.0,
+                      ),
+                    ),
+                  ),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(29))),
+                ),
+              ),
+          ],
+    ),
+      );
   }
 }
