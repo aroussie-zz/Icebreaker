@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -27,10 +29,18 @@ class _MyHomePageState extends State<MyHomePage>
     "Hi test 3!!"
   ];
 
+  List<Color> _backgroundColors = [
+    Colors.blue,
+    Colors.orange,
+    Colors.green,
+    Colors.purple
+  ];
+
   AnimationController _animationController;
   CurvedAnimation _curvedAnimation;
-  Animation<Offset> _offsetAnimation;
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey();
+  Animation<Color> _colorAnimation;
+  Tween<Color> _colorTween;
+  int _currentColorIndex = 0;
 
   @override
   void initState() {
@@ -43,67 +53,77 @@ class _MyHomePageState extends State<MyHomePage>
     _curvedAnimation =
         CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
 
-    _offsetAnimation = Tween<Offset>(begin: Offset(0, 0), end: Offset(-400, 0))
-        .animate(_curvedAnimation);
+    _colorTween = ColorTween(begin: _backgroundColors[0],
+        end: _backgroundColors[0]);
 
+    _colorAnimation = _colorTween
+        .animate(_curvedAnimation);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.orange,
         body: GestureDetector(
-            onTap: _startAnimation,
-            child: Stack(
-                overflow: Overflow.visible,
-                children: questions.map((question) {
-                  // We only want to display one question at a time
-                  //TODO: Might have to still display the second question but with opacity 0 ?
-                  if (questions.indexOf(question) < 1) {
-                    return AnimatedBuilder(
-                        animation: _offsetAnimation,
-                        builder: (_, child) {
-                          return Transform.translate(
-                            offset: _getFlickTransformOffset(),
-                            child: child,
-                          );
-                        },
-                        child: QuestionPage(question));
-                  } else {
-                    return Container();
-                  }
-                }).toList())));
+            onTap: animateToNewColor,
+            child: AnimatedBuilder(
+              animation: _colorAnimation,
+              builder: (_, child) {
+                return QuestionPage(UniqueKey(), "", _colorAnimation.value);
+              },
+            )));
+
+//            child: Stack(
+//                children: questions.map((question) {
+//
+//              if (questions.indexOf(question) < 1) {
+//                return AnimatedBuilder(
+//                  animation: _colorAnimation,
+//                  builder: (_, child) {
+//                    return QuestionPage("", _colorAnimation.value);
+//                  },
+//                );
+//              } else {
+//                return Container();
+//              }
+//            }).toList())));
   }
 
-  Offset _getFlickTransformOffset() {
-    return _offsetAnimation.value;
+  void animateToNewColor(){
+    _colorTween.begin = _colorTween.end;
+    _animationController.reset();
+    _colorTween.end = generateRandomColor();
+    _animationController.forward();
   }
 
-  void _startAnimation() {
-    //Start the animation
-    _animationController.forward().whenComplete(() {
-      setState(() {
-        _animationController.reset();
-        String question = questions.removeAt(0);
-        questions.add(question);
-      });
-    });
+
+  Color generateRandomColor() {
+    int a = Random().nextInt(_backgroundColors.length);
+    if (a != _currentColorIndex) {
+      _currentColorIndex = a;
+      return _backgroundColors[a];
+    } else
+      return generateRandomColor();
   }
 }
 
 class QuestionPage extends StatelessWidget {
-  QuestionPage(this.question);
+  QuestionPage(Key key, this.question, this.backgroundColor) : super(key: key);
 
   final String question;
+  final Color backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.blue,
+        backgroundColor: backgroundColor,
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Align(
-            child: Text(question, textScaleFactor: 3),
+            child: Text(
+              question,
+              textScaleFactor: 3,
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ));
   }
