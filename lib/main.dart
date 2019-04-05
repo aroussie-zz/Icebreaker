@@ -1,6 +1,9 @@
 import 'dart:math';
-
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:html_unescape/html_unescape.dart';
 
 void main() => runApp(MyApp());
 
@@ -8,11 +11,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
       home: MyHomePage(),
     );
+  }
+}
+
+class Question {
+  String question, answer;
+
+  Question({this.question, this.answer});
+
+  factory Question.fromJson(Map<String, dynamic> json) {
+    return Question(question: json['question'], answer: json['correct_answer']);
   }
 }
 
@@ -22,17 +32,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  List<String> questions = [
-    "If you could have an endless supply of any food, what would you get?",
-    "Hi",
-    "Hi test 3!!"
-  ];
-
-  List<Color> _backgroundColors = [
-    Colors.blue,
-    Colors.orange,
-    Colors.green,
-    Colors.purple
+  static const String TRIVIA_API_URL = 'https://opentdb.com/api.php?amount=30&category=18&type=boolean';
+  List<Question> _questions = [
+    Question(
+        question:
+            "Welcome in a Trivia quizz! Each question can be answer by true or false. "
+            "Tap on the screen to display the response of the question, "
+            "and do it again to go to the next question! Tap to START",
+        answer: "")
   ];
 
   AnimationController _animationController;
@@ -42,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Animation<double> _questionAnimation;
   Tween<Color> _colorTween;
   int _currentColorIndex = 0;
-  final UniqueKey questionKey = UniqueKey();
+  int _currentQuestionIndex = 0;
   String myQuestion;
 
   @override
@@ -50,24 +57,28 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 2000),
+      duration: Duration(milliseconds: 500),
     );
 
     _questionAnimationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 500),
+      duration: Duration(milliseconds: 250),
     );
 
     _curvedAnimation =
         CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
 
-    _colorTween =
-        ColorTween(begin: _backgroundColors[0], end: _backgroundColors[0]);
+    _colorTween = ColorTween(begin: Colors.orange, end: Colors.orange);
 
     _colorAnimation = _colorTween.animate(_curvedAnimation);
     _questionAnimation =
         Tween<double>(begin: 1, end: 0).animate(_questionAnimationController);
-    myQuestion = questions[0];
+    myQuestion = _questions[0].question;
+
+    getQuestions()
+        .then((fetchedQuestions) {
+        debugPrint("QUestions fetched !! Size: ${fetchedQuestions.length}");
+          _questions.addAll(fetchedQuestions);});
   }
 
   @override
@@ -88,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                 opacity: _questionAnimation.value,
                                 child: Text(
                                   myQuestion,
-                                  textScaleFactor: 3,
+                                  textScaleFactor: 2,
                                   style: TextStyle(color: Colors.white),
                                 ),
                               ),
@@ -103,44 +114,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _colorTween.end = generateRandomColor();
     _animationController.forward();
     _questionAnimationController.forward().whenComplete(() {
-      myQuestion = questions[1];
+      _currentQuestionIndex++;
+      myQuestion = HtmlUnescape().convert(_questions[_currentQuestionIndex].question);
       _questionAnimationController.reverse();
     });
   }
 
   Color generateRandomColor() {
-    int a = Random().nextInt(_backgroundColors.length);
+    var availableColors = Colors.primaries.sublist(0, 9);
+    int a = Random().nextInt(availableColors.length);
     if (a != _currentColorIndex) {
       _currentColorIndex = a;
-      return _backgroundColors[a];
+      return availableColors[a];
     } else
       return generateRandomColor();
   }
-}
 
-class QuestionPage extends StatelessWidget {
-  QuestionPage(Key key, this.question, this.opacity, this.backgroundColor)
-      : super(key: key);
-
-  final String question;
-  final Color backgroundColor;
-  double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: backgroundColor,
-        body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Align(
-              child: Opacity(
-                opacity: opacity,
-                child: Text(
-                  question,
-                  textScaleFactor: 3,
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            )));
+  Future<List<Question>> getQuestions() async {
+    final response = await http.get(TRIVIA_API_URL);
+    Iterable list = json.decode(response.body)['results'];
+    return list.map((model) => Question.fromJson(model)).toList();
   }
 }
