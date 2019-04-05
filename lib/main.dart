@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:html_unescape/html_unescape.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 void main() => runApp(MyApp());
 
@@ -16,31 +17,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Question {
-  String question, answer;
-
-  Question({this.question, this.answer});
-
-  factory Question.fromJson(Map<String, dynamic> json) {
-    return Question(question: json['question'], answer: json['correct_answer']);
-  }
-}
-
 class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  static const String TRIVIA_API_URL = 'https://opentdb.com/api.php?amount=30&category=18&type=boolean';
-  List<Question> _questions = [
-    Question(
-        question:
-            "Welcome in a Trivia quizz! Each question can be answer by true or false. "
-            "Tap on the screen to display the response of the question, "
-            "and do it again to go to the next question! Tap to START",
-        answer: "")
-  ];
+  List<String> _icebreakers = ["Helloooooo"];
 
   AnimationController _animationController;
   AnimationController _questionAnimationController;
@@ -73,12 +56,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _colorAnimation = _colorTween.animate(_curvedAnimation);
     _questionAnimation =
         Tween<double>(begin: 1, end: 0).animate(_questionAnimationController);
-    myQuestion = _questions[0].question;
 
-    getQuestions()
-        .then((fetchedQuestions) {
-        debugPrint("QUestions fetched !! Size: ${fetchedQuestions.length}");
-          _questions.addAll(fetchedQuestions);});
+    rootBundle.loadString("assets/questions.json").then((data) {
+      _icebreakers.addAll((json.decode(data) as List).map(((element) => element.toString())).toList());
+    });
+
+    myQuestion = _icebreakers[0];
+
   }
 
   @override
@@ -115,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _animationController.forward();
     _questionAnimationController.forward().whenComplete(() {
       _currentQuestionIndex++;
-      myQuestion = HtmlUnescape().convert(_questions[_currentQuestionIndex].question);
+      myQuestion = _icebreakers[_currentQuestionIndex];
       _questionAnimationController.reverse();
     });
   }
@@ -128,11 +112,5 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       return availableColors[a];
     } else
       return generateRandomColor();
-  }
-
-  Future<List<Question>> getQuestions() async {
-    final response = await http.get(TRIVIA_API_URL);
-    Iterable list = json.decode(response.body)['results'];
-    return list.map((model) => Question.fromJson(model)).toList();
   }
 }
