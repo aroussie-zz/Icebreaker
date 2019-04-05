@@ -1,9 +1,6 @@
 import 'dart:math';
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:html_unescape/html_unescape.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 void main() => runApp(MyApp());
@@ -23,7 +20,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  List<String> _icebreakers = ["Helloooooo"];
+  List<String> _icebreakers = ["Welcome message"];
 
   AnimationController _animationController;
   AnimationController _questionAnimationController;
@@ -83,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                 opacity: _questionAnimation.value,
                                 child: Text(
                                   myQuestion,
-                                  textScaleFactor: 2,
+                                  textScaleFactor: 2.5,
                                   style: TextStyle(color: Colors.white),
                                 ),
                               ),
@@ -98,7 +95,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _colorTween.end = generateRandomColor();
     _animationController.forward();
     _questionAnimationController.forward().whenComplete(() {
-      _currentQuestionIndex++;
+      //If reached the end of the questions, we start from the beginning again
+      _currentQuestionIndex = _currentQuestionIndex == _icebreakers.length - 1
+          ? 0 : _currentQuestionIndex +=1;
       myQuestion = _icebreakers[_currentQuestionIndex];
       _questionAnimationController.reverse();
     });
