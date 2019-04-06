@@ -10,10 +10,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  List<String> _icebreakers = ["Welcome message"];
+  List<String> _icebreakers = ["Welcome on Icebreaker!\nTap on the screen to display "
+      "a new question and get to know the people you're with!"];
 
   AnimationController _colorAnimController, _textAnimController;
-  CurvedAnimation _curvedAnimation;
   Animation<Color> _colorAnimation;
   Tween<Color> _colorTween;
   int _currentColorIndex, _currentQuestionIndex = 0;
@@ -32,11 +32,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       duration: Duration(milliseconds: 250),
     );
 
-    _curvedAnimation =
-        CurvedAnimation(parent: _colorAnimController, curve: Curves.easeOut);
-
     _colorTween = ColorTween(begin: Colors.orange, end: Colors.orange);
-    _colorAnimation = _colorTween.animate(_curvedAnimation);
+    _colorAnimation = _colorTween.animate(_colorAnimController);
 
     rootBundle.loadString("assets/questions.json").then((data) {
       _icebreakers.addAll((json.decode(data) as List)
