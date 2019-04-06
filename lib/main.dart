@@ -60,7 +60,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           .map(((element) => element.toString()))
           .toList());
     });
-
     _currentQuestion = _icebreakers[0];
   }
 
@@ -76,24 +75,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return Scaffold(
         backgroundColor: _colorAnimation.value,
         body: GestureDetector(
-          onTap: _animateColorAndText,
-          child: AnimatedBuilder(
-              animation: _colorAnimation,
-              builder: (_, child) {
-                return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(
-                      child: Opacity(
-                        opacity: _questionAnimation.value,
-                        child: Text(
-                          _currentQuestion,
-                          textScaleFactor: 2.5,
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ));
-              }),
-        ));
+            onTap: _animateColorAndText,
+            child: AnimatedBuilder(
+                animation: _colorAnimation,
+                builder: (_, child) {
+                  return Scaffold(
+                      backgroundColor: _colorAnimation.value,
+                      body: MyQuestionWidget(
+                          questionText: _currentQuestion,
+                          controller: _textAnimationController));
+                }))
+        );
   }
 
   void _animateColorAndText() {
@@ -122,5 +114,41 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       return availableColors[randomIndex];
     } else
       return _generateRandomColor();
+  }
+}
+
+class MyQuestionWidget extends StatelessWidget {
+  MyQuestionWidget({Key key, this.questionText, this.controller, this.colorController}) {
+    questionAnimation = Tween<double>(begin: 1, end: 0).animate(controller);
+    colorAnimation = _colorTween.animate(colorController);
+  }
+
+
+  String questionText = "";
+  Animation<double> controller;
+  Animation<double> colorController;
+  Animation<double> questionAnimation;
+  Tween<Color> _colorTween = ColorTween(begin: Colors.orange, end: Colors.orange);
+  Animation<Color> colorAnimation;
+
+
+  Widget _buildAnimation(BuildContext context, Widget child) {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Center(
+          child: Opacity(
+            opacity: questionAnimation.value,
+            child: Text(
+              questionText,
+              textScaleFactor: 2.5,
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(animation: controller, builder: _buildAnimation);
   }
 }
